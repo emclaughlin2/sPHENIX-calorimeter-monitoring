@@ -1,24 +1,40 @@
-## Real-Time Calorimeter State Logging and Monitoring
+# Real-Time Calorimeter State Logging and Monitoring
 
-Outline of the design and deployment of **real-time monitoring and logging infrastructure** for calorimeter detector state.
+## Related sPHENIX Core Software Pull Requests
 
-Each calorimeter sector contains six interface boards used to communicate with the detector for both configuration and monitoring.  
-Each interface board is connected to:
+- **Detector state ETL pipeline, database schema, and reconstruction integration**  
+  [sPHENIX coresoftware PR #2552](https://github.com/sPHENIX-Collaboration/coresoftware/pull/2552)
 
-- A slow-control communication board  
-- A Multi-channel Power Output Device (MPOD)  
-- A low-voltage power supply  
-- An Analog-to-Digital Converter (ADC) board  
+---
 
-The slow-control communication board is responsible for setting and monitoring the detector state, including:
+## Overview
 
-- SiPM temperatures  
+This document outlines the design and deployment of a **real-time data ingestion, logging, and monitoring system** for calorimeter detector state.  
+The system is engineered as a **continuous ETL pipeline** that extracts slow-control telemetry from hardware, transforms it into analysis-ready formats, and loads it into a relational database for **downstream analytics, monitoring, and reconstruction workflows**.
+
+The infrastructure supports both **low-latency operational monitoring** and **long-term historical analysis** across multi-year data-taking periods.
+
+---
+
+## Data Sources and Acquisition Layer
+
+Each calorimeter sector contains six interface boards used to communicate with detector hardware for configuration and monitoring.  
+Each interface board connects to:
+
+- Slow-control communication board (primary telemetry source)  
+- Multi-channel Power Output Device (MPOD)  
+- Low-voltage power supply  
+- Analog-to-Digital Converter (ADC) board  
+
+The slow-control boards act as the **primary data source**, exposing structured and semi-structured telemetry including:
+
+- SiPM temperature time series  
 - Low-voltage and bias-voltage set points  
 - Tower-by-tower bias voltage offsets  
 - Tower-by-tower SiPM leakage current  
 - Pre-amplifier gain mode  
 
-These boards are also used for commissioning tasks such as enabling LEDs and injecting test pulses for calibration runs.
+These same interfaces are also used for **control-plane operations** (LED pulsing, test pulses) that generate additional metadata consumed by calibration and validation workflows.
 
 ---
 
@@ -26,55 +42,83 @@ These boards are also used for commissioning tasks such as enabling LEDs and inj
 
 ![IHCal/OHCal Half-Sector Communication Design](figures/hcal_control_diagram.png)
 
-* Calorimeter sector communication design showing interface board connections to slow control, MPOD, low-voltage power, and ADC boards. Diagrams reproduced from the sPHENIX Technical Design Report.*
+*Calorimeter sector communication architecture illustrating data flow from hardware interfaces through slow-control systems, power distribution, and digitization layers. Diagram reproduced from the sPHENIX Technical Design Report.*
 
 ---
 
-## Detector State Logging Infrastructure
+## Detector State ETL Pipeline
 
-Detector state information is critical for both online detector operation and offline reconstruction and calibration.  
-For the EMCal and HCal, detector state information is logged in real time by:
+Detector state data is critical for both **online observability** and **offline analytics**.  
+For the EMCal and HCal, detector state is processed through a real-time ETL pipeline:
 
-1. Communicating with slow-control boards via telnet
-2. Parsing detector state responses  
-3. Writing parsed values to a PostgreSQL database via psycopg2  
+1. **Extract**  
+   - Poll slow-control boards via persistent telnet connections  
+2. **Transform**  
+   - Parse raw telemetry  
+   - Normalize units and formats  
+   - Map hardware channels to offline tower identifiers  
+3. **Load**  
+   - Persist structured records to a PostgreSQL database using `psycopg2`  
 
-Detector state has been logged at intervals of up to **every 10 minutes** for more than **three years of data taking**.
+The pipeline operates at a configurable cadence (up to **every 10 minutes**) and has continuously ingested data for **over three years**, enabling robust longitudinal analysis.
 
-### Database Schema
+---
+
+## Database Schema and Data Modeling
 
 ![HCal Database Schema](figures/hcal_database_schema.png)
 
-*Database schema used for logging HCal detector state, including slow-control data, bias voltage information, and LED/pedestal analysis results.*
+*Relational schema for HCal detector state logging, including slow-control telemetry, bias voltage configuration, and derived quantities from LED and pedestal analyses.*
 
-Detector information is keyed by **offline tower ID** and **timestamp**, enabling direct access to tower-by-tower state during reconstruction and calibration.  
-This structure supports temperature-dependent gain corrections and long-term stability monitoring.
+Key design features:
 
-**Implementation in sPHENIX core software:**
+- **Composite primary keys** using **offline tower ID** and **timestamp**  
+- Time-series–friendly schema optimized for aggregation and joins  
+- Clear separation between raw telemetry and derived calibration products  
 
-- Full integration into sPHENIX core software for use during reconstruction and calibration using odbc++ package  
+This data model enables:
+
+- Efficient tower-level queries during reconstruction  
+- Time-dependent corrections (e.g., temperature-driven gain drift)  
+- Cross-run and cross-period trend analysis  
+
+### Core Software Integration
+
+The database-backed detector state is fully integrated into the sPHENIX reconstruction and calibration stack via the `odbc++` interface.
+
+- End-to-end ETL → PostgreSQL → reconstruction workflow  
   implemented in [sPHENIX coresoftware PR #2552](https://github.com/sPHENIX-Collaboration/coresoftware/pull/2552)
 
 ---
 
-## Real-Time Monitoring Dashboards
+## Analytics and Monitoring Layer
 
-Grafana dashboards provide both real-time and historical views of the detector state. 
-Tower-level information is aggregated to present clear sector and half-sector summaries suitable for shift operations.
+Detector state data is surfaced through **Grafana dashboards** that support both operational monitoring and exploratory analysis.  
+Raw tower-level data is aggregated into sector- and half-sector–level metrics suitable for real-time decision-making.
 
 ![Shifter Monitoring Dashboard](figures/shift_monitoring.png)
 
-*Shifter-facing dashboard showing aggregated HCal gain, SiPM temperature, bias voltage offsets, LED, and pin-diode status.*
+*Operational dashboard showing aggregated HCal gain, SiPM temperature, bias voltage offsets, LED, and pin-diode health metrics.*
 
 ![Bias Voltage Monitoring Dashboard](figures/expert_bias_monitoring.png)
 
-*Expert dashboard displaying sector-level bias voltage monitoring for the HCal.*
+*Expert-facing dashboard providing detailed bias voltage time series and sector-level diagnostics.*
+
+These dashboards enable:
+
+- Real-time anomaly detection  
+- Rapid feedback during data taking  
+- Historical performance trending and validation  
 
 ---
 
-### Summary
+## Summary
 
-This monitoring, logging, and reconstruction framework enables:
+This system provides a production-grade **detector telemetry ETL and analytics pipeline** that enables:
 
-- Robust real-time detector health monitoring  
-- Long-term use in data production, reconstruction and calibration pipelines
+- Reliable real-time ingestion of hardware telemetry  
+- Scalable relational storage for multi-year time series  
+- Direct integration with physics reconstruction and calibration workflows  
+- Actionable monitoring and data-driven detector operations  
+
+The design emphasizes **data integrity, traceability, and analytical accessibility**, aligning detector operations with modern data engineering and analytics best practices.
