@@ -158,7 +158,9 @@ To maximize calorimeter acceptance and reduce event-by-event variations, an offl
 
 - Targets single-sample stuck bits in high-value bits (2¹¹–2¹³)  
 - Applies only to waveforms flagged by high χ²  
-- Explicitly excludes shifted bit streams, abnormal shapes, and low-value stuck bits  
+- Explicitly excludes shifted bit streams, abnormal shapes, and low-value stuck bits
+
+Full integration of waveform recovery strategy into sPHENIX core software for use during calorimeter reconstruction implemented in [sPHENIX coresoftware PR #2889](https://github.com/sPHENIX-Collaboration/coresoftware/pull/2889)
 
 ![Bit Flip Recovery Algorithm](figures/bit_flip_recovery_algorithm.png)
 
