@@ -3,13 +3,11 @@
 Substantial work on calorimeter commissioning, reconstruction, and calibration was required before producing high-quality physics results using the sPHENIX calorimeters.  
 This commissioning effort included the design and deployment of **real-time monitoring and logging infrastructure** for calorimeter detector state, as well as investigations into reconstruction issues related to readout electronics.
 
-In addition, a comprehensive set of calorimeter calibrations was required to accurately reconstruct the correct energy scale of the calorimeter signals.
-
 ---
 
 ## Real-Time Calorimeter State Logging and Monitoring
 
-Each EMCal sector contains six interface boards used to communicate with the detector for both configuration and monitoring.  
+Each calorimeter sector contains six interface boards used to communicate with the detector for both configuration and monitoring.  
 Each interface board is connected to:
 
 - A slow-control communication board  
@@ -27,19 +25,13 @@ The slow-control communication board is responsible for setting and monitoring t
 
 These boards are also used for commissioning tasks such as enabling LEDs and injecting test pulses for calibration runs.
 
-A similar control scheme is used for the IHCal and OHCal. Each half-sector contains a single interface and slow-control communication board that monitors SiPM temperatures, bias voltages and offsets, leakage current, and gain mode.
-
 ---
 
 ## Calorimeter Control Architecture
 
-![EMCal Sector Communication Design](figures/emcal_control_diagram.png)
-
-*EMCal sector communication design showing interface board connections to slow control, MPOD, low-voltage power, and ADC boards.*
-
 ![IHCal/OHCal Half-Sector Communication Design](figures/hcal_control_diagram.png)
 
-*IHCal and OHCal half-sector communication design showing interface board connections to slow control, MPOD, low-voltage power, and ADC boards. Diagrams reproduced from the sPHENIX Technical Design Report.*
+* Calorimeter sector communication design showing interface board connections to slow control, MPOD, low-voltage power, and ADC boards. Diagrams reproduced from the sPHENIX Technical Design Report.*
 
 ---
 
@@ -48,9 +40,9 @@ A similar control scheme is used for the IHCal and OHCal. Each half-sector conta
 Detector state information is critical for both online detector operation and offline reconstruction and calibration.  
 For the EMCal and HCal, detector state information is logged in real time by:
 
-1. Communicating with slow-control boards via telnet  
+1. Communicating with slow-control boards via telnet
 2. Parsing detector state responses  
-3. Writing parsed values to a PostgreSQL database  
+3. Writing parsed values to a PostgreSQL database via psycopg2  
 
 Detector state has been logged at intervals of up to **every 10 minutes** for more than **three years of data taking**.
 
@@ -72,6 +64,9 @@ This structure supports temperature-dependent gain corrections and long-term sta
 
 ## Real-Time Monitoring Dashboards
 
+Grafana dashboards provide both real-time and historical views of the detector state. 
+Tower-level information is aggregated to present clear sector and half-sector summaries suitable for shift operations.
+
 ![Shifter Monitoring Dashboard](figures/shift_monitoring.png)
 
 *Shifter-facing dashboard showing aggregated HCal gain, SiPM temperature, bias voltage offsets, LED, and pin-diode status.*
@@ -80,8 +75,6 @@ This structure supports temperature-dependent gain corrections and long-term sta
 
 *Expert dashboard displaying sector-level bias voltage monitoring for the HCal.*
 
-Grafana dashboards provide both real-time and historical views of the detector state. Tower-level information is aggregated to present clear sector and half-sector summaries suitable for shift operations.
-
 ---
 
 ## sPHENIX Low-Level Data Reconstruction
@@ -89,7 +82,7 @@ Grafana dashboards provide both real-time and historical views of the detector s
 During the first year of data taking, sPHENIX collected a commissioning dataset of Au+Au collision events.  
 These data were used to exercise the full data production, reconstruction, and calibration chain.
 
-Hot towers identified in the commissioning dataset revealed characteristic failure modes related to calorimeter digitization and readout electronics.
+Characteristic failure modes related to digitization and readout electronics were identified in the commissioning dataset.
 
 ---
 
@@ -106,7 +99,7 @@ Calorimeter digitization is performed using legacy PHENIX digitizer boards. Each
 
 *ADC board design used for digitizing calorimeter signals.*
 
-Two classes of abnormal waveform behavior were observed in Run-2023 commissioning data:
+Two failure modes were observed in Run-2023 commissioning data:
 
 1. **Persistent 2ⁿ ADC gaps**  
    - Present for a channel across an entire run  
