@@ -63,6 +63,11 @@ Detector state has been logged at intervals of up to **every 10 minutes** for mo
 Detector information is keyed by **offline tower ID** and **timestamp**, enabling direct access to tower-by-tower state during reconstruction and calibration.  
 This structure supports temperature-dependent gain corrections and long-term stability monitoring.
 
+**Implementation in sPHENIX core software:**
+
+- Full integration into sPHENIX core software for use during reconstruction and calibration using odbc++ package  
+  implemented in [sPHENIX coresoftware PR #2552](https://github.com/sPHENIX-Collaboration/coresoftware/pull/2552)
+
 ---
 
 ## Real-Time Monitoring Dashboards
@@ -180,7 +185,7 @@ Recovered waveforms must also pass standard fit-quality criteria to ensure no re
 
 ### Summary
 
-This monitoring, logging, and reconstruction framework enabled:
+This monitoring, logging, and reconstruction framework enables:
 
 - Robust real-time detector health monitoring  
 - Long-term calibration stability  
