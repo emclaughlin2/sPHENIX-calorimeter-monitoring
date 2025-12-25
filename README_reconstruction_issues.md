@@ -68,12 +68,12 @@ The challenge:
 
 | Metric | Result |
 |--------|--------|
-| Towers entering recovery logic | 4,105 per 10,000 events |
-| Successfully recovered towers | 857 per 10,000 events |
+| Towers entering recovery logic | 4,105 per 245,760,000 towers |
+| Successfully recovered towers | 857 per 245,760,000 towers |
 | Known bit-flip towers recovered | **99.997%** |
 | Random bit-flip false recoveries | 7 / 5M events (**0.002%**) |
 | False positives | 2 / 5M events (**0.0005%**) |
-| False negatives | 5 / 10,000 events |
+| False negatives | 5 / 5M events (**0.001%**) |
 
 **Key Insights:**
 
@@ -85,11 +85,10 @@ The challenge:
 
 ## Visualizations
 
-![Bit Flip Recovery Algorithm](figures/bit_flip_recovery_algorithm.png)
+![Bit Flip Recovery Algorithm](figures/bit_flip_algorithm.png)
 *Pseudo-code workflow for detecting and recovering high-value stuck bits.*
 
-![Before Bit Flip Recovery](figures/before_bit_flip_recovery_event5.png)
-![After Bit Flip Recovery](figures/after_bit_flip_recovery_event5.png)
+![Bit Flip Recovery Example](figures/bit_flip_recovery.png)
 *Example waveform before (left) and after (right) recovery.*
 
 ---
