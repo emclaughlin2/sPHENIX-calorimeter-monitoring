@@ -1,10 +1,5 @@
 # Real-Time Calorimeter State Logging and Monitoring
 
-## Related sPHENIX Core Software Pull Requests
-
-- **Detector state ETL pipeline, database schema, and reconstruction integration**  
-  [sPHENIX coresoftware PR #2552](https://github.com/sPHENIX-Collaboration/coresoftware/pull/2552)
-
 ## Project Overview
 
 This project demonstrates the design and deployment of a **high-volume, real-time data ingestion, logging, and monitoring system** for calorimeter detector state.  
