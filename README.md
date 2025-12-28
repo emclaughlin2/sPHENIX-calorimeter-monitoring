@@ -5,20 +5,32 @@
 - **Detector state ETL pipeline, database schema, and reconstruction integration**  
   [sPHENIX coresoftware PR #2552](https://github.com/sPHENIX-Collaboration/coresoftware/pull/2552)
 
----
-
-## Overview
+## Project Overview
 
 This project demonstrates the design and deployment of a **high-volume, real-time data ingestion, logging, and monitoring system** for calorimeter detector state.  
 The system is engineered as a **continuous ETL pipeline** that extracts slow-control telemetry from hardware, transforms it into analysis-ready formats, and loads it into a relational database for **downstream analytics, monitoring, and physics reconstruction workflows**.
 
-Key objectives:
+---
 
-- Enable **real-time operational monitoring**  
-- Support **long-term historical analysis** across multi-year datasets  
-- Provide **analysis-ready, structured data** for physics reconstruction  
+## Problem Statement
 
-This project showcases **data engineering, ETL, and analytics skills**, including scalable data ingestion, data modeling, time-series database design, and performance monitoring.
+The sPHENIX detector operates continuously (24/7) with an estimated operating cost of **~$1M per week**.  
+The physics analyses targeted by sPHENIX rely on **rare event signatures**, requiring the accumulation of **very large statistics over extended data-taking periods**.
+
+Any degradation in detector performance directly impacts:
+- Statistical power of analyses  
+- Scientific return on a high-cost experimental operation  
+
+To mitigate these risks, the experiment requires a **robust, real-time monitoring and logging system** capable of:
+
+- Continuously tracking detector state during live operations  
+- Providing rapid feedback for time-critical interventions  
+- Persisting high-granularity detector telemetry for long-term analysis  
+
+In addition to real-time observability, detector state data must be stored with sufficient temporal resolution to enable **post hoc de-trending and correction of time-dependent effects** (e.g., temperature-driven gain drift).  
+This allows data collected over long time spans to be **combined safely**, maximizing usable statistics without introducing systematic bias.
+
+The monitoring and ETL infrastructure described here addresses these requirements by ensuring **data quality, operational visibility, and long-term analytical integrity** across multi-year data-taking.
 
 ---
 
@@ -42,8 +54,6 @@ The slow-control boards act as the **primary data source**, exposing structured 
 
 These same interfaces are also used for **control-plane operations** (LED pulsing, test pulses) that generate additional metadata consumed by calibration and validation workflows.
 
-**Skills Highlighted:** Data ingestion, telemetry parsing, structured and semi-structured data handling, metadata management.
-
 ---
 
 ## Calorimeter Control Architecture
@@ -52,14 +62,12 @@ These same interfaces are also used for **control-plane operations** (LED pulsin
 
 *Calorimeter sector communication architecture illustrating data flow from hardware interfaces through slow-control systems, power distribution, and digitization layers. Diagram reproduced from the sPHENIX Technical Design Report.*
 
-**Skills Highlighted:** Systems integration, data pipeline design, dependency mapping.
-
 ---
 
 ## Detector State ETL Pipeline
 
 Detector state data is critical for both **online observability** and **offline analytics**.  
-For the EMCal and HCal, detector state is processed through a real-time ETL pipeline:
+For the EMCal and HCal, detector state is processed through a real-time fault-tolerant ETL pipeline:
 
 1. **Extract**  
    - Poll slow-control boards via persistent telnet connections  
@@ -68,13 +76,11 @@ For the EMCal and HCal, detector state is processed through a real-time ETL pipe
    - Normalize units and formats  
    - Map hardware channels to offline tower identifiers  
 3. **Load**  
-   - Persist structured records to a PostgreSQL database using `psycopg2`
+   - Batch process structured records to a PostgreSQL database using `psycopg2`
    - Maintain integrity of composite keys (offline tower ID + timestamp)
    - Maintain fault-tolerant ETL with local persistence and automatic backfill to prevent data loss during database outages 
 
-The pipeline operates at a configurable cadence (up to **every 10 minutes**) and has continuously ingested data for **over three years**, enabling robust longitudinal analysis.
-
-**Skills Highlighted:** fault-tolerant ETL design, batch processing, data parsing and normalization, time-series ingestion, relational database loading, logging and error handling, production-scale pipeline management
+The pipeline operates at a configurable cadence (**every 1-10 minutes**) and has continuously ingested data for **over three years**, enabling robust longitudinal analysis and offline high statistics temporal data de-trending.
 
 ---
 
@@ -86,26 +92,25 @@ The pipeline operates at a configurable cadence (up to **every 10 minutes**) and
 
 Key design features:
 
-- **Composite primary keys** using **offline tower ID** and **timestamp**  
-- Time-series–friendly schema optimized for aggregation and joins  
-- Clear separation between raw telemetry and derived calibration products  
+- **Composite primary keys** using **offline tower ID** and **timestamp** for ease in integration with offline data production pipeline
+- Time-series–friendly schema optimized for near-time monitoring
+- Clear separation between raw telemetry and derived calibration products
+- Static tables of tower-sector and nominal tower value information for easy aggregation and time-series analysis in monitoring dashboards 
 
 This data model enables:
 
+-  Easy aggregation and near real-time monitoring for immediate alerts of trend changes
 - Efficient tower-level queries during reconstruction  
-- Time-dependent corrections (e.g., temperature-driven gain drift)  
-- Cross-run and cross-period trend analysis
+- Time-dependent corrections (e.g., temperature-driven gain drift) for cross-run and cross-time period trend analysis and combination
 
-**Skills Highlighted:** Data modeling, relational schema design, time-series optimization, key management, ETL-to-DB mapping.
+---
 
 ### Core Software Integration
 
 The database-backed detector state is fully integrated into the sPHENIX reconstruction and calibration stack via the `odbc++` interface.
 
-- End-to-end ETL → PostgreSQL → reconstruction workflow  
+- PostgreSQL → reconstruction workflow  
   implemented in [sPHENIX coresoftware PR #2552](https://github.com/sPHENIX-Collaboration/coresoftware/pull/2552)
-
-**Skills Highlighted:** API integration, pipeline-to-application interfacing, cross-system data flow.
 
 ---
 
@@ -128,35 +133,32 @@ These dashboards enable:
 - Rapid feedback during data taking  
 - Historical performance trending and validation
 
-**Skills Highlighted:** Data aggregation, dashboarding, real-time monitoring, anomaly detection, metrics design, KPI visualization.
+---
+
+## Tools & Technologies
+
+**Data Engineering & ETL**
+- Design and implementation of **fault-tolerant ETL pipelines** for high-volume detector telemetry Python-based ingestion using **`psycopg2`**  
+- **Python** for parsing, normalization, and validation of semi-structured hardware telemetry
+- **Cron jobs** for scheduled ingestion, retries, and health checks
+- Local persistence and replay via **SQL snapshot files** to enable recovery from database outages  
+
+**Databases & Storage**
+- **PostgreSQL** for durable, queryable detector state storage  
+- Schema design using composite keys and static tables for quick aggregation and analysis
+
+**Dashboard Monitoring & Software Integration**
+- **Grafana** dashboards for real-time and historical monitoring  
+  - Metric aggregation and trend analysis across detector subsystems  
+  - Data quality checks and anomaly detection using derived metrics
+- Integration with large-scale **C++ data reconstruction framework** via the **`odbc++`** library
 
 ---
 
-## Key Achievements
+## Impact & Takeaways
 
-- Designed a **production-ready fault-tolerant ETL pipeline** for high-volume detector telemetry  
-- Implemented **relational schema** optimized for time-series analysis and physics reconstruction  
-- Enabled **real-time monitoring and anomaly detection** for detector health  
-- Produced **analysis-ready datasets** for calibration, reconstruction, and longitudinal studies  
-- Maintained **data integrity, traceability, and reproducibility** across multi-year datasets  
-
-**Technical Skills Demonstrated:**
-
-- ETL pipeline design and implementation  
-- Large-scale time-series data engineering  
-- Relational database design and optimization  
-- Data cleaning, normalization, and transformation  
-- Dashboard creation and metrics visualization  
-- Data quality assurance and validation  
-- Cross-system integration with scientific software stacks  
-
----
-
-## Impact
-
-This system aligns **detector operations with modern data engineering and analytics best practices**, enabling:
-
-- **Operational decision-making** through real-time dashboards  
-- **Long-term calibration and reconstruction support** using high-quality, structured detector state data  
-- **Traceable and auditable workflows**, ensuring reliability and reproducibility  
-- Transferable experience in **production-scale ETL and analytics pipelines** for industry applications
+- Enabled **real-time operational decision-making** during continuous 24/7 detector operation 
+- Preserved **data integrity and completeness** across multi-year data-taking through fault-tolerant ingestion  
+- Supported **long-term analytical workflows**, through integration in full production software for calibration, reconstruction, and de-trending of time-dependent effects  
+- Reduced risk of data loss during infrastructure outages via **local persistence and automated backfill**  
+- Demonstrated how **modern data engineering principles** can be applied to high-stakes, high-cost scientific systems  
