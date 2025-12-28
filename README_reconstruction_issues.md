@@ -5,7 +5,7 @@
 This project demonstrates **large-scale data analysis** applied to production physics data from the sPHENIX experiment.  
 The goal was to **detect, quantify, and recover rare hardware-induced failures** in calorimeter readout electronics, using **millions of events** to ensure statistical rigor.
 
-The work illustrates **data analyst skills** including anomaly detection, large-scale data validation, feature engineering, statistical evaluation, and production-ready pipeline integration.
+The work illustrates **data manipulation skills** including anomaly detection, large-scale data validation, feature engineering, statistical evaluation, and production-ready pipeline integration.
 
 ---
 
@@ -15,13 +15,14 @@ During commissioning, a small fraction of calorimeter channels exhibited **inter
 
 - These failures affected **<0.1% of channels**
 - Manifested as **sporadic spikes in high-value bits** (2¹¹–2¹³)
-- Reduced usable data and introduced event-by-event variability in downstream physics analyses
+- Easily mis-interpreted as high-value rare physics processes
+- Introduced event-by-event variability in downstream physics analyses
 
 The challenge:
 
-1. Identify rare failures in **hundreds of millions of waveform records**
-2. Validate their frequency and impact
-3. Develop a **recovery method** without introducing false positives
+1. Develop methology for identifying rare failures in **hundreds of millions of waveform records**
+2. Determine failure frequency and impact on data production pipeline
+3. Develop a **recovery method** without introducing false positives or performace losses in waveform fitting procedure
 4. Integrate the solution safely into production reconstruction workflows
 
 ---
@@ -30,7 +31,7 @@ The challenge:
 
 - **5 million collision events**
 - **245,760,000 calorimeter tower waveforms**
-- **15 runs** selected from the last month of production
+- **15 runs** selected from the last month of 2024 running 
 - Features extracted:
   - χ² fit quality from waveform template
   - Pedestal values
@@ -41,14 +42,13 @@ The challenge:
 
 ## Analytical Approach
 
-1. **Exploratory Data Analysis (EDA)**  
-   - Aggregated tower-level waveform metrics across runs  
+1. **Exploratory Data Analysis**  
+   - Aggregated tower-level waveform features across runs  
    - Identified abnormal patterns: persistent 2ⁿ gaps vs intermittent bit flips  
 
 2. **Feature Engineering & Candidate Selection**  
-   - High χ² and pedestal thresholds used to flag rare events  
-   - Isolated known high-value stuck-bit towers  
-   - Excluded ambiguous or shifted-bit channels  
+   - Determined high χ² could be used to flag abnromal waveforms rare events  
+   - Isolated known high-value stuck-bit towers and excluded ambiguous or shifted-bit channels using waveform pedestal thresholds  
 
 3. **Algorithm Design**  
    - Rule-based recovery on single-sample stuck bits (2¹¹–2¹³)  
@@ -60,7 +60,8 @@ The challenge:
    - Metrics captured:
      - True recovery rates
      - False positives / negatives
-     - Precision and recall  
+     - Precision and recall
+     - Procedure time span 
 
 ---
 
@@ -74,6 +75,7 @@ The challenge:
 | Random bit-flip false recoveries | 7 / 5M events (**0.002%**) |
 | False positives | 2 / 5M events (**0.0005%**) |
 | False negatives | 5 / 5M events (**0.001%**) |
+| Fitting procedure time | No change ( << procedure time variance across systems) |
 
 **Key Insights:**
 
@@ -95,8 +97,8 @@ The challenge:
 
 ## Tools & Technologies
 
-- Python (pandas, NumPy) for large-scale waveform analysis  
-- ROOT for high-volume physics data manipulation  
+- C++, ROOT and HTCondor for high-volume large scale event processing
+- Python (pandas, NumPy, matplotlib) for waveform analysis  
 - GitHub for version control and documentation  
 - Statistical metrics for validation (precision, recall, false-positive/negative rates)  
 
@@ -104,15 +106,10 @@ The challenge:
 
 ## Impact & Takeaways
 
-- Enabled **safe recovery of rare corrupted data**, increasing usable calorimeter events  
+-  Developed **methodology for rare event failure detection** using features extracted from nominal data production pipeline
+-  Enabled **safe recovery of rare corrupted data**, preventing the misclassification of background as rare high-value physics and increasing usable calorimeter events  
 - Quantified recovery performance at **scale (millions of events)**  
 - Applied **data-driven, reproducible methods** in a production pipeline  
-- Demonstrated skills directly relevant to **data analyst, data engineer, and analytics roles**:
-  - Large-scale data exploration
-  - Rare-event detection
-  - Statistical validation
-  - Production-quality pipeline integration
-  - Communicating findings to technical stakeholders
 
 ---
 
